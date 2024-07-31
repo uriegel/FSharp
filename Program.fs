@@ -1,5 +1,8 @@
 ﻿open FSharpPlus
 open System.IO
+open System
+open AsyncResult
+open FSharpPlus.Data.Validation
 
 let readText path =  
     File.ReadAllTextAsync path 
@@ -20,12 +23,33 @@ async {
     printfn "With bind op: %s" text
 } |> Async.RunSynchronously
 
+
 let readFromRead = readText >=> readText
 
 async {
     let! text = readFromRead "test/path.txt"
     printfn "With Kleisli op: %s" text
 } |> Async.RunSynchronously
+
+
+let readTextResult path : Async<Result<string, Exception>> =  
+    try 
+        File.ReadAllTextAsync path 
+        |> Async.AwaitTask
+        |> map (fun x -> Ok x)
+    with 
+        | e -> async { return Error e }
+
+let ar = readTextResult "test/path.txt" |> toAsyncResultAwait
+let rtra path = readTextResult path |> toAsyncResultAwait
+let readTextAwait = ar >>= rtra
+async {
+    let! text = readTextAwait |> AsyncResult<_,_>.toResult
+    match text with
+    | Ok ok -> printfn "With AsyncResult: %s" ok
+    | Error e -> printfn "Error"
+} |> Async.RunSynchronously
+
 
 type Birds = int
 type Pole = (Birds * Birds)
