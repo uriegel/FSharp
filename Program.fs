@@ -1,6 +1,31 @@
 ﻿open FSharpPlus
 open System.IO
-open System
+
+let readText path =  
+    File.ReadAllTextAsync path 
+    |> Async.AwaitTask
+
+async {
+    let! path = readText "test/path.txt"
+    let! text = readText path
+    printfn "Imperative: %s" text
+} |> Async.RunSynchronously
+
+let readFromPathfile = 
+    readText "test/path.txt"
+    >>= readText
+
+async {
+    let! text = readFromPathfile
+    printfn "With bind op: %s" text
+} |> Async.RunSynchronously
+
+let readFromRead = readText >=> readText
+
+async {
+    let! text = readFromRead "test/path.txt"
+    printfn "With Kleisli op: %s" text
+} |> Async.RunSynchronously
 
 type Birds = int
 type Pole = (Birds * Birds)
@@ -90,9 +115,7 @@ let tp =
     tryParse<int> "1000" 
     >>= tryDivide 345000
 
-let test = File.ReadAllTextAsync("./") |> Async.AwaitTask
-let test2 path = File.ReadAllTextAsync(path) |> Async.AwaitTask
-let mist = test >>= test2 
+
 
 
 
