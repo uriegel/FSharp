@@ -1,6 +1,39 @@
 ﻿open FSharpPlus
 open System.IO
 open AsyncResult
+open FSharp.Control
+open System
+
+
+
+
+
+
+
+
+
+let interval () = asyncSeq {
+  yield DateTime.Now
+  while true do
+    do! Async.Sleep 1000
+    yield DateTime.Now }
+
+let arr = interval ()
+            |> AsyncSeq.take 10
+
+async {
+    do! arr
+        |> AsyncSeq.iter (printfn "%O")
+
+} |> Async.RunSynchronously 
+
+
+
+
+
+
+
+
 
 let readText path =  
     File.ReadAllTextAsync path 
