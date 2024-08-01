@@ -1,6 +1,5 @@
 ﻿open FSharpPlus
 open System.IO
-open System
 open AsyncResult
 
 let readText path =  
@@ -30,21 +29,14 @@ async {
     printfn "With Kleisli op: %s" text
 } |> Async.RunSynchronously
 
-let readTextResult path : AsyncResult<string, Exception> =  
-    async {
-        let! res = File.ReadAllTextAsync path  |> Async.AwaitTask |> Async.Catch
-        return 
-            match res with
-            | Choice1Of2 r -> Ok r
-            | Choice2Of2 e -> Error e
-    } |> toAsyncResultAwait
-    
+let readTextResult path = catch (fun unit -> File.ReadAllTextAsync path)
+
 async {
     match! 
         "test/path.txt" 
         |> readTextResult 
         >>= readTextResult   
-        |> AsyncResult<_,_>.toResult 
+        |> toResult 
     with
     | Ok ok -> printfn "With AsyncResult: %s" ok
     | Error e -> printfn "Error"
@@ -55,7 +47,7 @@ let readFromReadResult = readTextResult >=> readTextResult
 async {
     match! 
         readFromReadResult "test/path.txt"
-        |> AsyncResult<_,_>.toResult 
+        |> toResult 
     with
     | Ok ok -> printfn "With AsyncResult Kleisli: %s" ok
     | Error e -> printfn "Error: %O" e
@@ -64,7 +56,7 @@ async {
 async {
     match! 
         readFromReadResult "test/not existing.txt"
-        |> AsyncResult<_,_>.toResult 
+        |> toResult 
     with
     | Ok ok -> printfn "With AsyncResult Kleisli: %s" ok
     | Error e -> printfn "With AsyncResult Kleisli, Error: %O" e
