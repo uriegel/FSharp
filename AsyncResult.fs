@@ -30,5 +30,14 @@ type AsyncResult<'a, 'e> with
             return! x.value
         } |> toAsyncResultAwait
     
+    static member map (f: 'a -> 'b) (ar: AsyncResult<'a, 'e>) : AsyncResult<'b, 'e> = 
+        async {
+            let! x = ar.value
+            let x = match x with
+                            | Ok ok -> Ok <| f ok
+                            | Error err ->  Error err
+            return x
+        } |> toAsyncResultAwait
+
     static member (>>=) ((ar: AsyncResult<'a, 'e>), (f: 'a -> AsyncResult<'b, 'e>)) = 
         ar |> (fun x ->  AsyncResult.bind f x)
